@@ -30,7 +30,7 @@ def log_insert(func):
         rows = func(*args, **kwargs)
         duration = time.time() - start
         logger.info(
-            f"Finished {func.__name__} | rows inserted: {rows} | duration: {duration:.3f}s"
+            f"Finished {func.__name__} | rows processed: {rows} | duration: {duration:.3f}s"
         )
         return rows
     return wrapper
@@ -88,7 +88,7 @@ def insert_indicators(df: pd.DataFrame) -> int:
     )
     conn.commit()
     conn.close()
-    return cursor.rowcount
+    return len(df_insert)
 
 
 # Run the full pipeline

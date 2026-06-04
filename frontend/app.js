@@ -340,9 +340,9 @@ function renderTable(data) {
             <td>${hasVal(d.ma_fast) ? fmt(d.ma_fast) : "—"}</td>
             <td>${hasVal(d.ma_medium) ? fmt(d.ma_medium) : "—"}</td>
             <td>${hasVal(d.ma_slow) ? fmt(d.ma_slow) : "—"}</td>
-            <td class="${d.macd >= 0 ? "positive" : "negative"}">${hasVal(d.macd) ? fmt(d.macd, 2) : "—"}</td>
+            <td class="${hasVal(d.macd) ? (d.macd >= 0 ? "positive" : "negative") : ""}">${hasVal(d.macd) ? fmt(d.macd, 2) : "—"}</td>
             <td>${hasVal(d.macd_signal) ? fmt(d.macd_signal, 2) : "—"}</td>
-            <td class="${d.macd_hist >= 0 ? "positive" : "negative"}">${hasVal(d.macd_hist) ? fmt(d.macd_hist, 2) : "—"}</td>
+            <td class="${hasVal(d.macd_hist) ? (d.macd_hist >= 0 ? "positive" : "negative") : ""}">${hasVal(d.macd_hist) ? fmt(d.macd_hist, 2) : "—"}</td>
             <td class="${d.rsi > 70 ? "negative" : d.rsi < 30 ? "positive" : ""}">${hasVal(d.rsi) ? fmt(d.rsi, 1) : "—"}</td>
         `;
         tbody.appendChild(tr);
@@ -365,9 +365,11 @@ function renderExplanation(summary, commodity, data) {
             ? "RSI is below 30 — the market is oversold and may be approaching a bounce."
             : `RSI is at ${summary.latest_rsi?.toFixed(1)} — neutral momentum with no clear extreme.`;
 
-    const macdSignal = summary.latest_macd > 0
-        ? "MACD is positive — the short-term trend is bullish."
-        : "MACD is negative — the short-term trend is bearish.";
+    const macdSignal = summary.latest_macd === null
+        ? "MACD data not yet available — insufficient history."
+        : summary.latest_macd > 0
+            ? "MACD is positive — the short-term trend is bullish."
+            : "MACD is negative — the short-term trend is bearish.";
 
     document.getElementById("explanation-body").innerHTML = `
         <p><strong style="color:#e0e0e0">${name}</strong> traded from

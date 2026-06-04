@@ -119,39 +119,37 @@ Commodity names in the URL are normalised to lowercase — `/prices/Copper` and 
 ## Project Structure
 
 ```
-app/
-  config.py           Centralised constants and paths
-  database.py         SQLite connection and query helpers
-  models.py           Pydantic response schemas
-  calculations.py     Moving averages, MACD, RSI
-  pipeline.py         CSV load, transform, and database insert
-  backtest.py         Signal generation and performance metrics
-  async_pipeline.py   Async insert and concurrent reads
-  main.py             FastAPI endpoints
-
-frontend/
-  index.html          Dashboard layout
-  styles.css
-  app.js              API calls, charts, table rendering
-
-solutions/
-  q1_data_manipulation.ipynb   CSV loading, filtering, monthly averages, charts
-  q2_sqlite_crud.ipynb         Schema design and CRUD operations
-  q3_pipeline.ipynb            Pipeline walkthrough and logging decorator
-  q6_backtest.ipynb            Strategy design, metrics, and commentary
-  q7_async.ipynb               Async insert and concurrent reads
-
-scripts/
-  init_db.py          Create database tables
-  run_pipeline.py     Run the full data pipeline
-
-tests/
-  conftest.py         Test database fixture and TestClient setup
-  test_calculations.py
-  test_api.py
-
-data/
-  MarketData.csv
+.
+├── app/
+│   ├── config.py               Centralised constants and paths
+│   ├── database.py             SQLite connection and query helpers
+│   ├── models.py               Pydantic response schemas
+│   ├── calculations.py         Moving averages, MACD, RSI
+│   ├── pipeline.py             CSV load, transform, and database insert
+│   ├── backtest.py             Signal generation and performance metrics
+│   ├── async_pipeline.py       Async insert and concurrent reads
+│   └── main.py                 FastAPI endpoints
+├── frontend/
+│   ├── index.html              Dashboard layout
+│   ├── styles.css              Styles and theme
+│   └── app.js                  API calls, charts, table rendering
+├── solutions/
+│   ├── q1_data_manipulation.ipynb    CSV loading, filtering, monthly averages, charts
+│   ├── q2_sqlite_crud.ipynb          Schema design and CRUD operations
+│   ├── q3_pipeline.ipynb             Pipeline walkthrough and logging decorator
+│   ├── q6_backtest.ipynb             Strategy design, metrics, and commentary
+│   └── q7_async.ipynb                Async insert and concurrent reads
+├── scripts/
+│   ├── init_db.py              Create database tables
+│   └── run_pipeline.py         Run the full data pipeline
+├── tests/
+│   ├── conftest.py             Test database fixture and TestClient setup
+│   ├── test_calculations.py    Unit tests for indicator correctness
+│   └── test_api.py             Integration tests for all API endpoints
+├── data/
+│   └── MarketData.csv
+├── pyproject.toml
+└── uv.lock
 ```
 
 Q4 (FastAPI backend) and Q5 (JavaScript dashboard) are implemented as the live application rather than notebooks.

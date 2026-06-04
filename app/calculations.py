@@ -57,15 +57,18 @@ def compute_macd(
     ema_slow = grp.transform(lambda x: x.ewm(span=slow, adjust=False).mean())
 
     df["macd"] = ema_fast - ema_slow
+
+    # Mask MACD before computing signal so the signal EWM only sees valid values
+    df.loc[df.groupby("commodity").cumcount() < slow, "macd"] = np.nan
+
     df["macd_signal"] = df.groupby("commodity")["macd"].transform(
         lambda x: x.ewm(span=signal, adjust=False).mean()
     )
     df["macd_hist"] = df["macd"] - df["macd_signal"]
 
-    # Mask until enough bars are available for the slow EMA
-    df.loc[
-        df.groupby("commodity").cumcount() < slow, ["macd", "macd_signal", "macd_hist"]
-    ] = np.nan
+    df.loc[df.groupby("commodity").cumcount() < slow, ["macd_signal", "macd_hist"]] = (
+        np.nan
+    )
 
     return df
 

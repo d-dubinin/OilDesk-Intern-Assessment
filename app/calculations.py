@@ -92,9 +92,12 @@ def compute_rsi(
     reset_index(drop=True) ensures ewm calculates correctly
     without index gaps when groupby splits the series.
     """
-    df["rsi"] = df.groupby("commodity")["price"].transform(
-        lambda x: _wilder_rsi(x.reset_index(drop=True), period)
-    )
+    def rsi_per_group(x):
+        result = _wilder_rsi(x.reset_index(drop=True), period)
+        result.index = x.index  # map result back to original index
+        return result
+
+    df["rsi"] = df.groupby("commodity")["price"].transform(rsi_per_group)
     return df
 
 

@@ -119,7 +119,11 @@ def get_summary(conn: sqlite3.Connection, commodity: str) -> dict:
                    ORDER BY date DESC LIMIT 1 OFFSET 1), 2) AS prev_day_price,
             ROUND((SELECT price FROM indicators
                    WHERE commodity = i.commodity
-                   ORDER BY date DESC LIMIT 1 OFFSET 4), 2) AS prev_week_price
+                   AND date <= date(
+                       (SELECT MAX(date) FROM indicators WHERE commodity = i.commodity),
+                       '-7 days'
+                   )
+                   ORDER BY date DESC LIMIT 1), 2) AS prev_week_price
         FROM indicators i
         WHERE commodity = ?
         GROUP BY commodity

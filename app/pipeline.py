@@ -7,7 +7,7 @@ from pathlib import Path
 import pandas as pd
 
 from app.calculations import compute_all_indicators
-from app.database import get_connection, create_tables
+from app.database import create_tables, get_connection
 from app.config import CSV_PATH, COMMODITIES, YEARS
 
 
@@ -34,7 +34,7 @@ def log_insert(func):
         rows = func(*args, **kwargs)
         duration = time.time() - start
         logger.info(
-            f"Finished {func.__name__} | rows processed: {rows} | duration: {duration:.3f}s"
+            f"Finished {func.__name__} | rows inserted: {rows} | duration: {duration:.3f}s"
         )
         return rows
 
@@ -70,10 +70,11 @@ def filter_data(df: pd.DataFrame, commodities: list, years: list) -> pd.DataFram
 
 
 @log_insert
-def insert_indicators(df: pd.DataFrame) -> int:
+def insert_indicators(df: pd.DataFrame, conn=None) -> int:
     """Insert transformed indicator data into SQLite. Returns row count."""
-    conn = get_connection()
-    create_tables(conn)
+    _own_conn = conn is None
+    if _own_conn:
+        conn = get_connection()
 
     df_insert = df.copy()
     df_insert["date"] = df_insert["date"].dt.strftime("%Y-%m-%d")
@@ -106,8 +107,9 @@ def insert_indicators(df: pd.DataFrame) -> int:
         df_insert[cols].to_dict(orient="records"),
     )
     conn.commit()
-    conn.close()
-    return len(df_insert)
+    if _own_conn:
+        conn.close()
+    return cursor.rowcount
 
 
 # Run the full pipeline
@@ -123,7 +125,10 @@ def run_pipeline(
     df_filtered = filter_data(df_raw, commodities, years)
     df_indicators = compute_all_indicators(df_filtered)
 
-    insert_indicators(df_indicators)
+    conn = get_connection()
+    create_tables(conn)
+    insert_indicators(df_indicators, conn=conn)
+    conn.close()
 
     logger.info("Pipeline complete")
 

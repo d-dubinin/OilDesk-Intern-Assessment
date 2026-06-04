@@ -9,7 +9,7 @@ from app.calculations import compute_all_indicators
 from app.config import COMMODITIES, YEARS
 from app.database import create_tables
 from app.main import app, get_db
-from app.pipeline import filter_data, load_csv
+from app.pipeline import filter_data, insert_indicators, load_csv
 
 
 @pytest.fixture(scope="module")
@@ -25,37 +25,8 @@ def client():
     try:
         conn = sqlite3.connect(db_path)
         create_tables(conn)
-
         df = compute_all_indicators(filter_data(load_csv(), COMMODITIES, YEARS))
-        df_insert = df.copy()
-        df_insert["date"] = df_insert["date"].dt.strftime("%Y-%m-%d")
-        df_insert["source"] = "Bloomberg"
-
-        cols = [
-            "date",
-            "commodity",
-            "price",
-            "ma_fast",
-            "ma_medium",
-            "ma_slow",
-            "macd",
-            "macd_signal",
-            "macd_hist",
-            "rsi",
-            "source",
-        ]
-        conn.executemany(
-            """
-            INSERT OR IGNORE INTO indicators
-                (date, commodity, price, ma_fast, ma_medium, ma_slow,
-                 macd, macd_signal, macd_hist, rsi, source)
-            VALUES
-                (:date, :commodity, :price, :ma_fast, :ma_medium, :ma_slow,
-                 :macd, :macd_signal, :macd_hist, :rsi, :source)
-            """,
-            df_insert[cols].to_dict(orient="records"),
-        )
-        conn.commit()
+        insert_indicators(df, conn=conn)
         conn.close()
 
         def override_get_db():

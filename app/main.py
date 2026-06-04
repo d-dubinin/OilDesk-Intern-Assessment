@@ -31,6 +31,9 @@ app = FastAPI(
 )
 
 # Allow the frontend to call the API from the browser
+# Wildcard CORS is intentional for local development — the frontend is served
+# from a separate http.server process and needs to call the API from the browser.
+# In production this should be restricted to the actual frontend origin.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],

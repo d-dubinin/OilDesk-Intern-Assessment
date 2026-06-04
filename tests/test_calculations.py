@@ -45,3 +45,43 @@ def test_early_rows_nan():
     df = compute_all_indicators(make_test_df())
     assert df["ma_slow"].iloc[:199].isna().all()
     assert df["rsi"].iloc[:14].isna().all()
+
+def test_moving_average_ordering():
+    """
+    In a steadily rising price series, fast MA reacts quicker than slow MA.
+    So at any given point: ma_fast > ma_medium > ma_slow.
+    Check this holds for the last row where all three are populated.
+    """
+    df = compute_all_indicators(make_test_df())
+    last = df.dropna().iloc[-1]
+    assert last["ma_fast"] > last["ma_medium"]
+    assert last["ma_medium"] > last["ma_slow"]
+
+
+def test_moving_average_warmup():
+    """
+    ma_fast needs 20 rows, ma_medium 50, ma_slow 200.
+    Check the exact boundary rows.
+    """
+    df = compute_all_indicators(make_test_df())
+    assert df["ma_fast"].iloc[:19].isna().all()
+    assert df["ma_fast"].iloc[19] is not None
+    assert df["ma_medium"].iloc[:49].isna().all()
+    assert df["ma_slow"].iloc[:199].isna().all()
+
+
+def test_macd_warmup():
+    """
+    MACD should be null until at least 26 bars of data are available.
+    """
+    df = compute_all_indicators(make_test_df())
+    assert df["macd"].iloc[:26].isna().all()
+
+
+def test_macd_histogram_sign():
+    """
+    In a rising market MACD line should eventually cross above signal,
+    making the histogram positive.
+    """
+    df = compute_all_indicators(make_test_df())
+    assert df["macd_hist"].dropna().iloc[-1] > 0

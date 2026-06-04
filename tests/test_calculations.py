@@ -1,4 +1,5 @@
 import pandas as pd
+import pytest
 from app.calculations import compute_all_indicators
 from app.pipeline import load_csv, filter_data
 from app.config import COMMODITIES, YEARS
@@ -78,6 +79,21 @@ def test_macd_warmup():
     """
     df = compute_all_indicators(make_test_df())
     assert df["macd"].iloc[:26].isna().all()
+
+
+def test_macd_signal_starts_from_first_valid_macd():
+    """
+    With MACD masked before computing the signal, the signal EWM starts
+    fresh from the first non-NaN MACD value. That means macd_signal at
+    the first valid row must equal macd at that row exactly — there is no
+    prior history for the EWM to draw on.
+
+    Before the masking-order fix this would fail: the signal EWM was
+    warmed up on unreliable pre-26-bar MACD values, so signal[26] != macd[26].
+    """
+    df = compute_all_indicators(make_test_df())
+    first_idx = df["macd"].first_valid_index()
+    assert df.loc[first_idx, "macd_signal"] == pytest.approx(df.loc[first_idx, "macd"])
 
 
 def test_macd_histogram_sign():

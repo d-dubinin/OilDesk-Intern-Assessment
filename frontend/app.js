@@ -80,11 +80,18 @@ async function loadCommodity(commodity) {
     activeCommodity = commodity;
     setActiveTab(commodity);
 
-    const [indicatorRes, summaryRes, backtestRes] = await Promise.all([
-        apiFetch(`/indicators/${commodity}`),
-        apiFetch(`/summary/${commodity}`),
-        apiFetch(`/backtest/${commodity}`),
-    ]);
+    let indicatorRes, summaryRes, backtestRes;
+    try {
+        [indicatorRes, summaryRes, backtestRes] = await Promise.all([
+            apiFetch(`/indicators/${commodity}`),
+            apiFetch(`/summary/${commodity}`),
+            apiFetch(`/backtest/${commodity}`),
+        ]);
+    } catch (err) {
+        document.getElementById("explanation-body").textContent =
+            `Failed to load data for ${commodity}: ${err.message}`;
+        return;
+    }
 
     const data = indicatorRes.data;
     const summary = summaryRes.summary;
@@ -326,16 +333,17 @@ function renderTable(data) {
 
     [...data].reverse().forEach(d => {
         const tr = document.createElement("tr");
+        const hasVal = v => v !== null && v !== undefined;
         tr.innerHTML = `
             <td>${d.date}</td>
             <td>${fmt(d.price)}</td>
-            <td>${d.ma_fast ? fmt(d.ma_fast) : "—"}</td>
-            <td>${d.ma_medium ? fmt(d.ma_medium) : "—"}</td>
-            <td>${d.ma_slow ? fmt(d.ma_slow) : "—"}</td>
-            <td class="${d.macd >= 0 ? "positive" : "negative"}">${d.macd ? fmt(d.macd, 2) : "—"}</td>
-            <td>${d.macd_signal ? fmt(d.macd_signal, 2) : "—"}</td>
-            <td class="${d.macd_hist >= 0 ? "positive" : "negative"}">${d.macd_hist ? fmt(d.macd_hist, 2) : "—"}</td>
-            <td class="${d.rsi > 70 ? "negative" : d.rsi < 30 ? "positive" : ""}">${d.rsi ? fmt(d.rsi, 1) : "—"}</td>
+            <td>${hasVal(d.ma_fast) ? fmt(d.ma_fast) : "—"}</td>
+            <td>${hasVal(d.ma_medium) ? fmt(d.ma_medium) : "—"}</td>
+            <td>${hasVal(d.ma_slow) ? fmt(d.ma_slow) : "—"}</td>
+            <td class="${d.macd >= 0 ? "positive" : "negative"}">${hasVal(d.macd) ? fmt(d.macd, 2) : "—"}</td>
+            <td>${hasVal(d.macd_signal) ? fmt(d.macd_signal, 2) : "—"}</td>
+            <td class="${d.macd_hist >= 0 ? "positive" : "negative"}">${hasVal(d.macd_hist) ? fmt(d.macd_hist, 2) : "—"}</td>
+            <td class="${d.rsi > 70 ? "negative" : d.rsi < 30 ? "positive" : ""}">${hasVal(d.rsi) ? fmt(d.rsi, 1) : "—"}</td>
         `;
         tbody.appendChild(tr);
     });

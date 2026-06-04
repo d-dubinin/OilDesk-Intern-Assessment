@@ -139,6 +139,70 @@
             </div>
         </section>
 
+        <!-- Backtest -->
+        <section class="table-panel">
+            <div class="panel-header">
+                <span class="panel-title">BACKTEST — COMPOSITE SIGNAL STRATEGY</span>
+                <span class="panel-sub">THRESHOLD 0.5 | LONG / SHORT</span>
+            </div>
+
+            <div class="backtest-metrics">
+                <div class="stat-card">
+                    <div class="stat-label">TOTAL RETURN</div>
+                    <div class="stat-value" id="bt-total">—</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">ANN. RETURN</div>
+                    <div class="stat-value" id="bt-ann">—</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">SHARPE</div>
+                    <div class="stat-value" id="bt-sharpe">—</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">MAX DRAWDOWN</div>
+                    <div class="stat-value" id="bt-dd">—</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">WIN RATE</div>
+                    <div class="stat-value" id="bt-wr">—</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">ANN. VOL</div>
+                    <div class="stat-value" id="bt-vol">—</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">TRADES</div>
+                    <div class="stat-value" id="bt-trades">—</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">DAYS</div>
+                    <div class="stat-value" id="bt-days">—</div>
+                </div>
+            </div>
+
+            <div class="charts-row" style="padding:16px;gap:16px;">
+                <div class="chart-panel panel--large" style="border:none;">
+                    <div class="panel-header">
+                        <span class="panel-title">CUMULATIVE PNL</span>
+                        <button onclick="resetZoom('pnl')" class="btn-reset">RESET ZOOM</button>
+                    </div>
+                    <div class="chart-wrap">
+                        <canvas id="chart-pnl"></canvas>
+                    </div>
+                </div>
+                <div class="chart-panel panel--small" style="border:none;">
+                    <div class="panel-header">
+                        <span class="panel-title">DRAWDOWN</span>
+                        <button onclick="resetZoom('dd')" class="btn-reset">RESET ZOOM</button>
+                    </div>
+                    <div class="chart-wrap">
+                        <canvas id="chart-dd"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>

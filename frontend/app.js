@@ -4,6 +4,8 @@ let activeCommodity = null;
 let chartPrice = null;
 let chartRsi = null;
 let chartMacd = null;
+let chartPnl = null;
+let chartDd = null;
 
 const COMMODITY_LABELS = {
     copper: "Copper",
@@ -78,18 +80,21 @@ async function loadCommodity(commodity) {
     activeCommodity = commodity;
     setActiveTab(commodity);
 
-    const [indicatorRes, summaryRes] = await Promise.all([
+    const [indicatorRes, summaryRes, backtestRes] = await Promise.all([
         apiFetch(`/indicators/${commodity}`),
         apiFetch(`/summary/${commodity}`),
+        apiFetch(`/backtest/${commodity}`),
     ]);
 
     const data = indicatorRes.data;
     const summary = summaryRes.summary;
+    const bt = backtestRes;
 
     renderSummary(summary, commodity);
     renderCharts(data, commodity);
     renderTable(data);
     renderExplanation(summary, commodity, data);
+    renderBacktest(bt);
 }
 
 // --- Formatting ---
@@ -141,6 +146,8 @@ function destroyCharts() {
     if (chartPrice) { chartPrice.destroy(); chartPrice = null; }
     if (chartRsi) { chartRsi.destroy(); chartRsi = null; }
     if (chartMacd) { chartMacd.destroy(); chartMacd = null; }
+    if (chartPnl) { chartPnl.destroy(); chartPnl = null; }
+    if (chartDd) { chartDd.destroy(); chartDd = null; }
 }
 
 const ZOOM_PLUGIN = {
@@ -198,7 +205,6 @@ function renderCharts(data, commodity) {
     const signal = data.map(d => d.macd_signal);
     const hist = data.map(d => d.macd_hist);
 
-    // Price + MAs — legend is clickable to toggle each line
     chartPrice = new Chart(document.getElementById("chart-price"), {
         type: "line",
         data: {
@@ -223,11 +229,7 @@ function renderCharts(data, commodity) {
                         meta.hidden = !meta.hidden;
                         legend.chart.update();
                     },
-                    labels: {
-                        color: "#666",
-                        font: { family: "'IBM Plex Mono'", size: 9 },
-                        boxWidth: 12,
-                    },
+                    labels: { color: "#666", font: { family: "'IBM Plex Mono'", size: 9 }, boxWidth: 12 },
                 },
                 zoom: ZOOM_PLUGIN,
             },
@@ -235,7 +237,6 @@ function renderCharts(data, commodity) {
         },
     });
 
-    // RSI
     chartRsi = new Chart(document.getElementById("chart-rsi"), {
         type: "line",
         data: {
@@ -268,7 +269,6 @@ function renderCharts(data, commodity) {
         },
     });
 
-    // MACD — legend clickable to toggle histogram/lines
     chartMacd = new Chart(document.getElementById("chart-macd"), {
         type: "bar",
         data: {
@@ -298,11 +298,7 @@ function renderCharts(data, commodity) {
                         meta.hidden = !meta.hidden;
                         legend.chart.update();
                     },
-                    labels: {
-                        color: "#666",
-                        font: { family: "'IBM Plex Mono'", size: 9 },
-                        boxWidth: 12,
-                    },
+                    labels: { color: "#666", font: { family: "'IBM Plex Mono'", size: 9 }, boxWidth: 12 },
                 },
                 zoom: ZOOM_PLUGIN,
             },
@@ -317,6 +313,8 @@ function resetZoom(which) {
     if (which === "price" && chartPrice) chartPrice.resetZoom();
     if (which === "rsi" && chartRsi) chartRsi.resetZoom();
     if (which === "macd" && chartMacd) chartMacd.resetZoom();
+    if (which === "pnl" && chartPnl) chartPnl.resetZoom();
+    if (which === "dd" && chartDd) chartDd.resetZoom();
 }
 
 // --- Table ---
@@ -329,16 +327,16 @@ function renderTable(data) {
     [...data].reverse().forEach(d => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
-      <td>${d.date}</td>
-      <td>${fmt(d.price)}</td>
-      <td>${d.ma_fast ? fmt(d.ma_fast) : "—"}</td>
-      <td>${d.ma_medium ? fmt(d.ma_medium) : "—"}</td>
-      <td>${d.ma_slow ? fmt(d.ma_slow) : "—"}</td>
-      <td class="${d.macd >= 0 ? "positive" : "negative"}">${d.macd ? fmt(d.macd, 2) : "—"}</td>
-      <td>${d.macd_signal ? fmt(d.macd_signal, 2) : "—"}</td>
-      <td class="${d.macd_hist >= 0 ? "positive" : "negative"}">${d.macd_hist ? fmt(d.macd_hist, 2) : "—"}</td>
-      <td class="${d.rsi > 70 ? "negative" : d.rsi < 30 ? "positive" : ""}">${d.rsi ? fmt(d.rsi, 1) : "—"}</td>
-    `;
+            <td>${d.date}</td>
+            <td>${fmt(d.price)}</td>
+            <td>${d.ma_fast ? fmt(d.ma_fast) : "—"}</td>
+            <td>${d.ma_medium ? fmt(d.ma_medium) : "—"}</td>
+            <td>${d.ma_slow ? fmt(d.ma_slow) : "—"}</td>
+            <td class="${d.macd >= 0 ? "positive" : "negative"}">${d.macd ? fmt(d.macd, 2) : "—"}</td>
+            <td>${d.macd_signal ? fmt(d.macd_signal, 2) : "—"}</td>
+            <td class="${d.macd_hist >= 0 ? "positive" : "negative"}">${d.macd_hist ? fmt(d.macd_hist, 2) : "—"}</td>
+            <td class="${d.rsi > 70 ? "negative" : d.rsi < 30 ? "positive" : ""}">${d.rsi ? fmt(d.rsi, 1) : "—"}</td>
+        `;
         tbody.appendChild(tr);
     });
 }
@@ -364,20 +362,108 @@ function renderExplanation(summary, commodity, data) {
         : "MACD is negative — the short-term trend is bearish.";
 
     document.getElementById("explanation-body").innerHTML = `
-    <p><strong style="color:#e0e0e0">${name}</strong> traded from
-    <strong>${fmt(first.price)} ${unit}</strong> on ${first.date} to
-    <strong>${fmt(last.price)} ${unit}</strong> on ${last.date},
-    ${direction} <strong style="color:${summary.period_change_pct >= 0 ? '#2ecc71' : '#e74c3c'}">${Math.abs(summary.period_change_pct).toFixed(2)}%</strong>
-    over the period. The average settlement price was <strong>${fmt(summary.avg_price)} ${unit}</strong>,
-    with a low of <strong>${fmt(summary.min_price)}</strong> and a high of <strong>${fmt(summary.max_price)}</strong>.</p>
-    <p>${rsiSignal} ${macdSignal}</p>
-    <p>The 20-day moving average tracks short-term momentum (one trading month),
-    the 50-day captures the medium-term trend (one quarter),
-    and the 200-day represents the long-term structural trend (one year).
-    Price above all three moving averages signals a bullish alignment.
-    Click any legend item on the charts to toggle it on or off.
-    Scroll to zoom, drag to pan.</p>
-  `;
+        <p><strong style="color:#e0e0e0">${name}</strong> traded from
+        <strong>${fmt(first.price)} ${unit}</strong> on ${first.date} to
+        <strong>${fmt(last.price)} ${unit}</strong> on ${last.date},
+        ${direction} <strong style="color:${summary.period_change_pct >= 0 ? '#2ecc71' : '#e74c3c'}">${Math.abs(summary.period_change_pct).toFixed(2)}%</strong>
+        over the period. The average settlement price was <strong>${fmt(summary.avg_price)} ${unit}</strong>,
+        with a low of <strong>${fmt(summary.min_price)}</strong> and a high of <strong>${fmt(summary.max_price)}</strong>.</p>
+        <p>${rsiSignal} ${macdSignal}</p>
+        <p>The 20-day moving average tracks short-term momentum (one trading month),
+        the 50-day captures the medium-term trend (one quarter),
+        and the 200-day represents the long-term structural trend (one year).
+        Price above all three moving averages signals a bullish alignment.
+        Click any legend item on the charts to toggle it on or off.
+        Scroll to zoom, drag to pan.</p>
+    `;
+}
+
+// --- Backtest ---
+
+function renderBacktest(bt) {
+    const m = bt.metrics;
+
+    setStatValue("bt-total", fmtPct(m.total_return_pct), m.total_return_pct >= 0 ? "positive" : "negative");
+    setStatValue("bt-ann", fmtPct(m.annualised_return_pct), m.annualised_return_pct >= 0 ? "positive" : "negative");
+    setStatValue("bt-sharpe", fmt(m.sharpe_ratio, 3), m.sharpe_ratio >= 0 ? "positive" : "negative");
+    setStatValue("bt-dd", fmtPct(m.max_drawdown_pct), "negative");
+    setStatValue("bt-wr", fmtPct(m.win_rate_pct));
+    setStatValue("bt-vol", fmtPct(m.annualised_vol_pct));
+    setStatValue("bt-trades", m.n_trades);
+    setStatValue("bt-days", m.n_days);
+
+    const labels = bt.series.map(d => d.date);
+    const buyHold = bt.series.map(d => (d.cumulative_return * 100).toFixed(2));
+    const strategy = bt.series.map(d => (d.cumulative_strategy_return * 100).toFixed(2));
+    const drawdown = bt.series.map(d => (d.drawdown * 100).toFixed(2));
+
+    const pctScales = {
+        x: BASE_SCALES.x,
+        y: {
+            ...BASE_SCALES.y,
+            ticks: { ...BASE_SCALES.y.ticks, callback: v => `${v}%` },
+        },
+    };
+
+    chartPnl = new Chart(document.getElementById("chart-pnl"), {
+        type: "line",
+        data: {
+            labels,
+            datasets: [
+                { label: "Strategy", data: strategy, borderColor: "#c8a84b", borderWidth: 1.5, pointRadius: 0, tension: 0 },
+                { label: "Buy & Hold", data: buyHold, borderColor: "#3498db", borderWidth: 1, pointRadius: 0, tension: 0, borderDash: [4, 2] },
+            ],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: false,
+            plugins: {
+                tooltip: BASE_TOOLTIP,
+                legend: {
+                    display: true,
+                    onClick: (e, legendItem, legend) => {
+                        const meta = legend.chart.getDatasetMeta(legendItem.datasetIndex);
+                        meta.hidden = !meta.hidden;
+                        legend.chart.update();
+                    },
+                    labels: { color: "#666", font: { family: "'IBM Plex Mono'", size: 9 }, boxWidth: 12 },
+                },
+                zoom: ZOOM_PLUGIN,
+            },
+            scales: pctScales,
+        },
+    });
+
+    chartDd = new Chart(document.getElementById("chart-dd"), {
+        type: "line",
+        data: {
+            labels,
+            datasets: [
+                {
+                    label: "Drawdown",
+                    data: drawdown,
+                    borderColor: "#e74c3c",
+                    borderWidth: 1.5,
+                    pointRadius: 0,
+                    tension: 0,
+                    fill: true,
+                    backgroundColor: "rgba(231,76,60,0.1)",
+                },
+            ],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: false,
+            plugins: {
+                tooltip: BASE_TOOLTIP,
+                legend: { display: false },
+                zoom: ZOOM_PLUGIN,
+            },
+            scales: pctScales,
+        },
+    });
 }
 
 // --- Start ---

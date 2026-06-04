@@ -42,6 +42,7 @@ def signal_sma_cross(df: pd.DataFrame) -> pd.Series:
     """
     return np.sign(df["ma_fast"] - df["ma_medium"]).fillna(0)
 
+
 def compute_composite_signal(df: pd.DataFrame) -> pd.DataFrame:
     """
     Combine three signals by averaging.
@@ -58,7 +59,6 @@ def compute_composite_signal(df: pd.DataFrame) -> pd.DataFrame:
 
     df["position"] = 0
     df.loc[df["signal_avg"] > SIGNAL_THRESHOLD, "position"] =  1
-    df.loc[df["signal_avg"] < -SIGNAL_THRESHOLD, "position"] = 0
 
     return df
 
@@ -79,8 +79,10 @@ def run_backtest(df: pd.DataFrame) -> pd.DataFrame:
     df = compute_composite_signal(df)
     df = df.dropna(subset=["price"]).copy()
 
-    # Daily log returns
-    df["log_return"] = np.log(df["price"] / df["price"].shift(1))
+    # Daily log returns — suppress warning for the first row (NaN) and any
+    # zero or negative prices (e.g. crude oil went negative in April 2020)
+    with np.errstate(invalid="ignore", divide="ignore"):
+        df["log_return"] = np.log(df["price"] / df["price"].shift(1))
 
     # Strategy return = position from previous day * today's return
     # (position is set at close, return is next day's move)

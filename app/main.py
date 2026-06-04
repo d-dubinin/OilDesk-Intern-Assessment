@@ -1,6 +1,9 @@
 
+import pandas as pd
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from app.backtest import run_backtest, compute_metrics
  
 from app.database import (
     get_connection,
@@ -16,6 +19,7 @@ from app.models import (
     PricesByCommodityResponse,
     IndicatorsResponse,
     SummaryResponse,
+    BacktestResponse
 )
  
 app = FastAPI(
@@ -125,3 +129,37 @@ def summary(commodity: str):
     data = get_summary(conn, commodity)
     conn.close()
     return {"commodity": commodity, "summary": data}
+
+@app.get("/backtest/{commodity}", response_model=BacktestResponse)
+def backtest(commodity: str):
+    """Run composite signal backtest for a specific commodity."""
+    conn = get_connection()
+    available = get_commodities(conn)
+
+    if commodity not in available:
+        conn.close()
+        raise HTTPException(
+            status_code=404,
+            detail=f"Commodity '{commodity}' not found. Available: {available}",
+        )
+
+    data = get_indicators(conn, commodity)
+    conn.close()
+
+    df = pd.DataFrame(data)
+    df["date"] = pd.to_datetime(df["date"])
+    df = df.sort_values("date").reset_index(drop=True)
+
+    result   = run_backtest(df)
+    metrics  = compute_metrics(result)
+
+    # Return daily series for charting
+    series = result[["date", "cumulative_return", "cumulative_strategy_return", "drawdown", "position"]].copy()
+    series["date"] = series["date"].dt.strftime("%Y-%m-%d")
+    series = series.dropna()
+
+    return {
+        "commodity": commodity,
+        "metrics":   metrics,
+        "series":    series.to_dict(orient="records"),
+    }

@@ -18,5 +18,9 @@ RSI_OVERSOLD = 30
 # Pipeline settings
 COMMODITIES = ["copper", "zinc", "crude_oil"]
 YEARS = [2020, 2021]
-DB_PATH = Path("data/oildesk.db")
-CSV_PATH = Path("data/MarketData.csv")
+ROOT = Path(__file__).parent.parent
+DB_PATH  = ROOT / "data" / "oildesk.db"
+CSV_PATH = ROOT / "data" / "MarketData.csv"
+
+# Strategy parameters
+SIGNAL_THRESHOLD = 0.5

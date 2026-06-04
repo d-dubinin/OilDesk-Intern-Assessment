@@ -75,3 +75,25 @@ class SummaryData(BaseModel):
 class SummaryResponse(BaseModel):
     commodity: str
     summary: SummaryData
+
+class BacktestMetrics(BaseModel):
+    total_return_pct: float
+    annualised_return_pct: float
+    annualised_vol_pct: float
+    sharpe_ratio: float
+    max_drawdown_pct: float
+    win_rate_pct: float
+    n_trades: int
+    n_days: int
+
+class BacktestSeries(BaseModel):
+    date: str
+    cumulative_return: float
+    cumulative_strategy_return: float
+    drawdown: float
+    position: float
+
+class BacktestResponse(BaseModel):
+    commodity: str
+    metrics: BacktestMetrics
+    series: list[BacktestSeries]

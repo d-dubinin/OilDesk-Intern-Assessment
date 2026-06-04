@@ -120,7 +120,7 @@ def compute_metrics(df: pd.DataFrame) -> dict:
 
     total_return = df["cumulative_strategy_return"].iloc[-1]
     n_days = len(returns)
-    annualised_return = (1 + total_return) ** (252 / n_days) - 1
+    annualised_return = returns.mean() * 252
     annualised_vol = returns.std() * np.sqrt(252)
     sharpe = annualised_return / annualised_vol if annualised_vol != 0 else 0
     max_drawdown = df["drawdown"].min()

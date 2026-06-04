@@ -1,8 +1,3 @@
-import sys
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
 import pandas as pd
 from app.calculations import compute_all_indicators
 from app.pipeline import load_csv, filter_data

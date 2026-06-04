@@ -1,12 +1,9 @@
 import sqlite3
-import sys
 import tempfile
 from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
-
-sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from app.calculations import compute_all_indicators
 from app.config import COMMODITIES, YEARS

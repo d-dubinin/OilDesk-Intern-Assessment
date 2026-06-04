@@ -1,6 +1,12 @@
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 import pandas as pd
-import numpy as np
 from app.calculations import compute_all_indicators
+from app.pipeline import load_csv, filter_data
+from app.config import COMMODITIES, YEARS
 
 
 def make_test_df() -> pd.DataFrame:
@@ -65,7 +71,7 @@ def test_moving_average_warmup():
     """
     df = compute_all_indicators(make_test_df())
     assert df["ma_fast"].iloc[:19].isna().all()
-    assert df["ma_fast"].iloc[19] is not None
+    assert pd.notna(df["ma_fast"].iloc[19])
     assert df["ma_medium"].iloc[:49].isna().all()
     assert df["ma_slow"].iloc[:199].isna().all()
 
@@ -85,3 +91,38 @@ def test_macd_histogram_sign():
     """
     df = compute_all_indicators(make_test_df())
     assert df["macd_hist"].dropna().iloc[-1] > 0
+
+
+def test_indicators_independent_per_commodity():
+    """
+    Indicators for one commodity must not bleed into another.
+
+    We put a rising series (copper) and a flat series (zinc) in the same
+    dataframe. After compute_all_indicators, all zinc MAs must equal exactly
+    100 — the flat price. If groupby isolation is broken, zinc would pick up
+    copper's rising prices and the MAs would be wrong.
+    """
+    dates = pd.date_range("2020-01-01", periods=250, freq="B")
+    df = pd.DataFrame({
+        "date": list(dates) * 2,
+        "commodity": ["copper"] * 250 + ["zinc"] * 250,
+        "price": list(range(1, 251)) + [100.0] * 250,
+    })
+    result = compute_all_indicators(df)
+    zinc = result[result["commodity"] == "zinc"]
+
+    assert (zinc["ma_fast"].dropna() == 100.0).all()
+    assert (zinc["ma_medium"].dropna() == 100.0).all()
+
+
+def test_no_duplicate_date_commodity_pairs():
+    """
+    The pipeline must produce unique (date, commodity) combinations.
+
+    The database has a UNIQUE(date, commodity) constraint so duplicates would
+    be silently dropped on insert. This test catches the problem earlier —
+    at the transformation stage — before it reaches the database.
+    """
+    df = filter_data(load_csv(), COMMODITIES, YEARS)
+    dupes = df.duplicated(subset=["date", "commodity"])
+    assert not dupes.any(), f"{dupes.sum()} duplicate (date, commodity) pairs found"

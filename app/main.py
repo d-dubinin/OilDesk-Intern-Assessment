@@ -1,4 +1,3 @@
-
 import sqlite3
 from typing import Iterator
 
@@ -80,6 +79,7 @@ def prices(conn: sqlite3.Connection = Depends(get_db)):
 @app.get("/prices/{commodity}", response_model=PricesByCommodityResponse)
 def prices_by_commodity(commodity: str, conn: sqlite3.Connection = Depends(get_db)):
     """Return price and indicator data for a specific commodity."""
+    commodity = commodity.lower()
     available = get_commodities(conn)
     if commodity not in available:
         raise HTTPException(
@@ -94,6 +94,7 @@ def prices_by_commodity(commodity: str, conn: sqlite3.Connection = Depends(get_d
 @app.get("/indicators/{commodity}", response_model=IndicatorsResponse)
 def indicators(commodity: str, conn: sqlite3.Connection = Depends(get_db)):
     """Return indicator data (MA, MACD, RSI) for a specific commodity."""
+    commodity = commodity.lower()
     available = get_commodities(conn)
     if commodity not in available:
         raise HTTPException(
@@ -108,6 +109,7 @@ def indicators(commodity: str, conn: sqlite3.Connection = Depends(get_db)):
 @app.get("/summary/{commodity}", response_model=SummaryResponse)
 def summary(commodity: str, conn: sqlite3.Connection = Depends(get_db)):
     """Return price statistics summary for a specific commodity."""
+    commodity = commodity.lower()
     available = get_commodities(conn)
     if commodity not in available:
         raise HTTPException(
@@ -120,6 +122,7 @@ def summary(commodity: str, conn: sqlite3.Connection = Depends(get_db)):
 @app.get("/backtest/{commodity}", response_model=BacktestResponse)
 def backtest(commodity: str, conn: sqlite3.Connection = Depends(get_db)):
     """Run composite signal backtest for a specific commodity."""
+    commodity = commodity.lower()
     available = get_commodities(conn)
     if commodity not in available:
         raise HTTPException(

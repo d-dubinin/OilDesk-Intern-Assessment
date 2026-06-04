@@ -42,17 +42,6 @@ def signal_sma_cross(df: pd.DataFrame) -> pd.Series:
     """
     return np.sign(df["ma_fast"] - df["ma_medium"]).fillna(0)
 
-
-def signal_macd(df: pd.DataFrame) -> pd.Series:
-    """
-    Signal 4 — MACD vs signal line.
-    +1 if MACD > signal line (bullish momentum)
-    -1 if MACD < signal line (bearish momentum)
-     0 if equal
-    """
-    return np.sign(df["macd"] - df["macd_signal"]).fillna(0)
-
-
 def compute_composite_signal(df: pd.DataFrame) -> pd.DataFrame:
     """
     Combine three signals by averaging.

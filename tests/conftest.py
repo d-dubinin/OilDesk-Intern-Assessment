@@ -35,8 +35,17 @@ def client():
         df_insert["source"] = "Bloomberg"
 
         cols = [
-            "date", "commodity", "price", "ma_fast", "ma_medium",
-            "ma_slow", "macd", "macd_signal", "macd_hist", "rsi", "source",
+            "date",
+            "commodity",
+            "price",
+            "ma_fast",
+            "ma_medium",
+            "ma_slow",
+            "macd",
+            "macd_signal",
+            "macd_hist",
+            "rsi",
+            "source",
         ]
         conn.executemany(
             """

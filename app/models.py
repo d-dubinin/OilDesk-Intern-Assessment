@@ -1,15 +1,15 @@
 from pydantic import BaseModel
 from typing import Optional
- 
- 
+
+
 class HealthResponse(BaseModel):
     status: str
- 
- 
+
+
 class CommoditiesResponse(BaseModel):
     commodities: list[str]
- 
- 
+
+
 class PriceRecord(BaseModel):
     id: int
     date: str
@@ -24,17 +24,17 @@ class PriceRecord(BaseModel):
     rsi: Optional[float]
     source: str
     created_at: str
- 
- 
+
+
 class PricesResponse(BaseModel):
     data: list[PriceRecord]
- 
- 
+
+
 class PricesByCommodityResponse(BaseModel):
     commodity: str
     data: list[PriceRecord]
- 
- 
+
+
 class IndicatorRecord(BaseModel):
     date: str
     commodity: str
@@ -46,13 +46,13 @@ class IndicatorRecord(BaseModel):
     macd_signal: Optional[float]
     macd_hist: Optional[float]
     rsi: Optional[float]
- 
- 
+
+
 class IndicatorsResponse(BaseModel):
     commodity: str
     data: list[IndicatorRecord]
- 
- 
+
+
 class SummaryData(BaseModel):
     commodity: str
     total_rows: int
@@ -70,11 +70,12 @@ class SummaryData(BaseModel):
     period_change_pct: Optional[float]
     daily_change_pct: Optional[float]
     weekly_change_pct: Optional[float]
- 
- 
+
+
 class SummaryResponse(BaseModel):
     commodity: str
     summary: SummaryData
+
 
 class BacktestMetrics(BaseModel):
     total_return_pct: float
@@ -86,12 +87,14 @@ class BacktestMetrics(BaseModel):
     n_trades: int
     n_days: int
 
+
 class BacktestSeries(BaseModel):
     date: str
     cumulative_return: float
     cumulative_strategy_return: float
     drawdown: float
     position: float
+
 
 class BacktestResponse(BaseModel):
     commodity: str

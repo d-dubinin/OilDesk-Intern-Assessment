@@ -1,7 +1,5 @@
 import pytest
-from app.calculations import compute_all_indicators
-from app.config import COMMODITIES, YEARS
-from app.pipeline import filter_data, load_csv
+from app.config import COMMODITIES
 
 
 def test_health(client):
@@ -41,7 +39,16 @@ def test_indicators_returns_expected_fields(client, commodity):
     res = client.get(f"/indicators/{commodity}")
     assert res.status_code == 200
     record = res.json()["data"][0]
-    for field in ["date", "price", "ma_fast", "ma_medium", "ma_slow", "macd", "macd_signal", "rsi"]:
+    for field in [
+        "date",
+        "price",
+        "ma_fast",
+        "ma_medium",
+        "ma_slow",
+        "macd",
+        "macd_signal",
+        "rsi",
+    ]:
         assert field in record
 
 
@@ -51,7 +58,14 @@ def test_summary_returns_required_fields(client, commodity):
     res = client.get(f"/summary/{commodity}")
     assert res.status_code == 200
     summary = res.json()["summary"]
-    for field in ["latest_price", "min_price", "max_price", "avg_price", "start_date", "end_date"]:
+    for field in [
+        "latest_price",
+        "min_price",
+        "max_price",
+        "avg_price",
+        "start_date",
+        "end_date",
+    ]:
         assert field in summary
 
 
@@ -63,7 +77,12 @@ def test_backtest_returns_metrics_and_series(client, commodity):
     data = res.json()
     assert "metrics" in data
     assert "series" in data
-    for field in ["sharpe_ratio", "max_drawdown_pct", "total_return_pct", "win_rate_pct"]:
+    for field in [
+        "sharpe_ratio",
+        "max_drawdown_pct",
+        "total_return_pct",
+        "win_rate_pct",
+    ]:
         assert field in data["metrics"]
 
 

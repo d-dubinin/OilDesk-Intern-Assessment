@@ -10,6 +10,7 @@ from app.config import (
 
 # Signal generation
 
+
 def signal_price_vs_sma(df: pd.DataFrame) -> pd.Series:
     """
     Signal 1 — Price vs long-term SMA (MA200 by default).
@@ -28,7 +29,7 @@ def signal_rsi(df: pd.DataFrame) -> pd.Series:
      0 otherwise — neutral
     """
     signal = pd.Series(0, index=df.index)
-    signal[df["rsi"] < RSI_OVERSOLD]   =  1
+    signal[df["rsi"] < RSI_OVERSOLD] = 1
     signal[df["rsi"] > RSI_OVERBOUGHT] = -1
     return signal.fillna(0)
 
@@ -58,12 +59,13 @@ def compute_composite_signal(df: pd.DataFrame) -> pd.DataFrame:
     df["signal_avg"] = df[["sig1", "sig2", "sig3"]].mean(axis=1)
 
     df["position"] = 0
-    df.loc[df["signal_avg"] > SIGNAL_THRESHOLD, "position"] =  1
+    df.loc[df["signal_avg"] > SIGNAL_THRESHOLD, "position"] = 1
 
     return df
 
 
 # Backtest engine
+
 
 def run_backtest(df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -93,7 +95,7 @@ def run_backtest(df: pd.DataFrame) -> pd.DataFrame:
     df["cumulative_strategy_return"] = df["strategy_return"].cumsum().apply(np.exp) - 1
 
     # Drawdown
-    df["equity"] = (1 + df["cumulative_strategy_return"])
+    df["equity"] = 1 + df["cumulative_strategy_return"]
     df["peak"] = df["equity"].cummax()
     df["drawdown"] = (df["equity"] - df["peak"]) / df["peak"]
 
@@ -101,6 +103,7 @@ def run_backtest(df: pd.DataFrame) -> pd.DataFrame:
 
 
 # Performance metrics
+
 
 def compute_metrics(df: pd.DataFrame) -> dict:
     """
@@ -121,7 +124,9 @@ def compute_metrics(df: pd.DataFrame) -> dict:
     annualised_vol = returns.std() * np.sqrt(252)
     sharpe = annualised_return / annualised_vol if annualised_vol != 0 else 0
     max_drawdown = df["drawdown"].min()
-    win_rate = (returns > 0).sum() / (returns != 0).sum() if (returns != 0).sum() > 0 else 0
+    win_rate = (
+        (returns > 0).sum() / (returns != 0).sum() if (returns != 0).sum() > 0 else 0
+    )
     n_trades = df["position"].diff().abs().gt(0).sum()
 
     return {

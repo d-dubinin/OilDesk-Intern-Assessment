@@ -21,22 +21,28 @@ logger = logging.getLogger(__name__)
 
 # Decorator
 
+
 def log_insert(func):
     """Log function name, start time, end time, duration, and rows inserted."""
+
     @wraps(func)
     def wrapper(*args, **kwargs):
         start = time.time()
-        logger.info(f"Starting {func.__name__} at {datetime.now().strftime('%H:%M:%S')}")
+        logger.info(
+            f"Starting {func.__name__} at {datetime.now().strftime('%H:%M:%S')}"
+        )
         rows = func(*args, **kwargs)
         duration = time.time() - start
         logger.info(
             f"Finished {func.__name__} | rows processed: {rows} | duration: {duration:.3f}s"
         )
         return rows
+
     return wrapper
 
 
 # Pipeline steps
+
 
 def load_csv(path: Path = CSV_PATH) -> pd.DataFrame:
     """Load and parse the raw CSV file."""
@@ -55,7 +61,9 @@ def load_csv(path: Path = CSV_PATH) -> pd.DataFrame:
 def filter_data(df: pd.DataFrame, commodities: list, years: list) -> pd.DataFrame:
     """Filter by commodities and years, melt to long format."""
     df = df[df["date"].dt.year.isin(years)][["date"] + commodities].copy()
-    df = df.melt(id_vars="date", value_vars=commodities, var_name="commodity", value_name="price")
+    df = df.melt(
+        id_vars="date", value_vars=commodities, var_name="commodity", value_name="price"
+    )
     df = df.dropna(subset=["price"])
     df = df.sort_values(["commodity", "date"]).reset_index(drop=True)
     return df
@@ -71,8 +79,19 @@ def insert_indicators(df: pd.DataFrame) -> int:
     df_insert["date"] = df_insert["date"].dt.strftime("%Y-%m-%d")
     df_insert["source"] = "Bloomberg"
 
-    cols = ["date", "commodity", "price", "ma_fast", "ma_medium",
-            "ma_slow", "macd", "macd_signal", "macd_hist", "rsi", "source"]
+    cols = [
+        "date",
+        "commodity",
+        "price",
+        "ma_fast",
+        "ma_medium",
+        "ma_slow",
+        "macd",
+        "macd_signal",
+        "macd_hist",
+        "rsi",
+        "source",
+    ]
 
     cursor = conn.cursor()
     cursor.executemany(
@@ -92,6 +111,7 @@ def insert_indicators(df: pd.DataFrame) -> int:
 
 
 # Run the full pipeline
+
 
 def run_pipeline(
     commodities: list = COMMODITIES,

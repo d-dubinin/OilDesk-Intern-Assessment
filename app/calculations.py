@@ -2,8 +2,12 @@ import pandas as pd
 import numpy as np
 
 from app.config import (
-    MA_FAST, MA_MEDIUM, MA_SLOW,
-    MACD_FAST, MACD_SLOW, MACD_SIGNAL,
+    MA_FAST,
+    MA_MEDIUM,
+    MA_SLOW,
+    MACD_FAST,
+    MACD_SLOW,
+    MACD_SIGNAL,
     RSI_PERIOD,
 )
 
@@ -60,8 +64,7 @@ def compute_macd(
 
     # Mask until enough bars are available for the slow EMA
     df.loc[
-        df.groupby("commodity").cumcount() < slow,
-        ["macd", "macd_signal", "macd_hist"]
+        df.groupby("commodity").cumcount() < slow, ["macd", "macd_signal", "macd_hist"]
     ] = np.nan
 
     return df
@@ -75,8 +78,8 @@ def _wilder_rsi(series: pd.Series, period: int = RSI_PERIOD) -> pd.Series:
     Early rows are masked until the warmup period is complete.
     """
     delta = series.diff()
-    gain = delta.clip(lower=0)    # positive moves only, negatives zeroed
-    loss = -delta.clip(upper=0)   # negative moves flipped to positive
+    gain = delta.clip(lower=0)  # positive moves only, negatives zeroed
+    loss = -delta.clip(upper=0)  # negative moves flipped to positive
 
     alpha = 1.0 / period
     avg_gain = gain.ewm(alpha=alpha, adjust=False).mean()
@@ -99,6 +102,7 @@ def compute_rsi(
     reset_index(drop=True) ensures ewm calculates correctly
     without index gaps when groupby splits the series.
     """
+
     def rsi_per_group(x):
         result = _wilder_rsi(x.reset_index(drop=True), period)
         result.index = x.index  # map result back to original index

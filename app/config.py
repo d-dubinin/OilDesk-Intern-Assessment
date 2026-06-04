@@ -1,8 +1,8 @@
 from pathlib import Path
 
 # Moving average lookbacks — standard commodity market periods
-MA_FAST = 20   # one trading month
-MA_MEDIUM = 50   # one trading quarter
+MA_FAST = 20  # one trading month
+MA_MEDIUM = 50  # one trading quarter
 MA_SLOW = 200  # one trading year
 
 # MACD parameters — universal defaults across all trading platforms
@@ -19,7 +19,7 @@ RSI_OVERSOLD = 30
 COMMODITIES = ["copper", "zinc", "crude_oil"]
 YEARS = [2020, 2021]
 ROOT = Path(__file__).parent.parent
-DB_PATH  = ROOT / "data" / "oildesk.db"
+DB_PATH = ROOT / "data" / "oildesk.db"
 CSV_PATH = ROOT / "data" / "MarketData.csv"
 
 # Strategy parameters

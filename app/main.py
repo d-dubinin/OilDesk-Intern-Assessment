@@ -50,6 +50,7 @@ def get_db() -> Iterator[sqlite3.Connection]:
 
 # Health
 
+
 @app.get("/health", response_model=HealthResponse)
 def health(conn: sqlite3.Connection = Depends(get_db)):
     """Check the API is running and the database is reachable."""
@@ -62,6 +63,7 @@ def health(conn: sqlite3.Connection = Depends(get_db)):
 
 # Commodities
 
+
 @app.get("/commodities", response_model=CommoditiesResponse)
 def commodities(conn: sqlite3.Connection = Depends(get_db)):
     """Return the list of available commodities."""
@@ -69,6 +71,7 @@ def commodities(conn: sqlite3.Connection = Depends(get_db)):
 
 
 # Prices
+
 
 @app.get("/prices", response_model=PricesResponse)
 def prices(conn: sqlite3.Connection = Depends(get_db)):
@@ -91,6 +94,7 @@ def prices_by_commodity(commodity: str, conn: sqlite3.Connection = Depends(get_d
 
 # Indicators
 
+
 @app.get("/indicators/{commodity}", response_model=IndicatorsResponse)
 def indicators(commodity: str, conn: sqlite3.Connection = Depends(get_db)):
     """Return indicator data (MA, MACD, RSI) for a specific commodity."""
@@ -105,6 +109,7 @@ def indicators(commodity: str, conn: sqlite3.Connection = Depends(get_db)):
 
 
 # Summary
+
 
 @app.get("/summary/{commodity}", response_model=SummaryResponse)
 def summary(commodity: str, conn: sqlite3.Connection = Depends(get_db)):
@@ -139,7 +144,15 @@ def backtest(commodity: str, conn: sqlite3.Connection = Depends(get_db)):
     result = run_backtest(df)
     metrics = compute_metrics(result)
 
-    series = result[["date", "cumulative_return", "cumulative_strategy_return", "drawdown", "position"]].copy()
+    series = result[
+        [
+            "date",
+            "cumulative_return",
+            "cumulative_strategy_return",
+            "drawdown",
+            "position",
+        ]
+    ].copy()
     series["date"] = series["date"].dt.strftime("%Y-%m-%d")
     series = series.dropna()
 

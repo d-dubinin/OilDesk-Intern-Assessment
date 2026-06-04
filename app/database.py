@@ -44,6 +44,11 @@ def create_tables(conn: sqlite3.Connection) -> None:
         )
     """)
 
+    conn.execute("""
+        CREATE INDEX IF NOT EXISTS idx_indicators_commodity_date
+        ON indicators(commodity, date)
+    """)
+
     conn.commit()
 
 
@@ -59,8 +64,7 @@ def get_indicator_rows(conn: sqlite3.Connection, commodity: str = None) -> list:
     """Return indicator rows from the indicators table, optionally filtered by commodity."""
     if commodity:
         rows = conn.execute(
-            "SELECT * FROM indicators WHERE commodity = ? ORDER BY date",
-            (commodity,)
+            "SELECT * FROM indicators WHERE commodity = ? ORDER BY date", (commodity,)
         ).fetchall()
     else:
         rows = conn.execute(
@@ -79,7 +83,7 @@ def get_indicators(conn: sqlite3.Connection, commodity: str) -> list:
         WHERE commodity = ?
         ORDER BY date
         """,
-        (commodity,)
+        (commodity,),
     ).fetchall()
     return [dict(row) for row in rows]
 
@@ -120,7 +124,7 @@ def get_summary(conn: sqlite3.Connection, commodity: str) -> dict:
         WHERE commodity = ?
         GROUP BY commodity
         """,
-        (commodity,)
+        (commodity,),
     ).fetchone()
 
     if not row:
@@ -131,19 +135,31 @@ def get_summary(conn: sqlite3.Connection, commodity: str) -> dict:
     # Period return
     if result["first_price"] and result["latest_price"]:
         result["period_change_pct"] = round(
-            ((result["latest_price"] - result["first_price"]) / result["first_price"]) * 100, 2
+            ((result["latest_price"] - result["first_price"]) / result["first_price"])
+            * 100,
+            2,
         )
 
     # Daily change
     if result["prev_day_price"] and result["latest_price"]:
         result["daily_change_pct"] = round(
-            ((result["latest_price"] - result["prev_day_price"]) / result["prev_day_price"]) * 100, 2
+            (
+                (result["latest_price"] - result["prev_day_price"])
+                / result["prev_day_price"]
+            )
+            * 100,
+            2,
         )
 
     # Weekly change
     if result["prev_week_price"] and result["latest_price"]:
         result["weekly_change_pct"] = round(
-            ((result["latest_price"] - result["prev_week_price"]) / result["prev_week_price"]) * 100, 2
+            (
+                (result["latest_price"] - result["prev_week_price"])
+                / result["prev_week_price"]
+            )
+            * 100,
+            2,
         )
 
     return result

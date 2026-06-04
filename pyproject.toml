@@ -20,9 +20,17 @@ dev-dependencies = [
     "matplotlib>=3.10.9",
     "pre-commit>=4.0.0",
     "pytest>=9.0.3",
+    "pytest-cov>=6.0.0",
     "ruff>=0.9.0",
 ]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
 filterwarnings = ["ignore::PendingDeprecationWarning"]
+
+[tool.coverage.run]
+source = ["app"]
+omit = ["app/async_pipeline.py"]
+
+[tool.coverage.report]
+show_missing = true

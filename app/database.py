@@ -56,8 +56,8 @@ def get_commodities(conn: sqlite3.Connection) -> list:
     return [row["commodity"] for row in rows]
 
 
-def get_prices(conn: sqlite3.Connection, commodity: str = None) -> list:
-    """Return all prices, optionally filtered by commodity."""
+def get_indicator_rows(conn: sqlite3.Connection, commodity: str = None) -> list:
+    """Return indicator rows from the indicators table, optionally filtered by commodity."""
     if commodity:
         rows = conn.execute(
             "SELECT * FROM indicators WHERE commodity = ? ORDER BY date",

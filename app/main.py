@@ -11,7 +11,7 @@ from app.backtest import run_backtest, compute_metrics
 from app.database import (
     get_connection,
     get_commodities,
-    get_prices,
+    get_indicator_rows,
     get_indicators,
     get_summary,
 )
@@ -74,7 +74,7 @@ def commodities(conn: sqlite3.Connection = Depends(get_db)):
 @app.get("/prices", response_model=PricesResponse)
 def prices(conn: sqlite3.Connection = Depends(get_db)):
     """Return all price and indicator data for all commodities."""
-    return {"data": get_prices(conn)}
+    return {"data": get_indicator_rows(conn)}
 
 
 @app.get("/prices/{commodity}", response_model=PricesByCommodityResponse)
@@ -86,7 +86,7 @@ def prices_by_commodity(commodity: str, conn: sqlite3.Connection = Depends(get_d
             status_code=404,
             detail=f"Commodity '{commodity}' not found. Available: {available}",
         )
-    return {"commodity": commodity, "data": get_prices(conn, commodity)}
+    return {"commodity": commodity, "data": get_indicator_rows(conn, commodity)}
 
 
 # Indicators

@@ -73,7 +73,13 @@ Notebooks are in `solutions/`. Q3 and Q7 require the pipeline to have been run f
 uv run pytest tests/ -v
 ```
 
-27 tests across two files.
+With coverage (92% on the core `app/` modules):
+
+```bash
+uv run pytest tests/ --cov
+```
+
+28 tests across two files.
 
 **`test_calculations.py` — unit tests for indicator correctness**
 
@@ -81,6 +87,7 @@ uv run pytest tests/ -v
 - MACD histogram satisfies the identity `hist = macd − signal` to floating-point precision
 - MA20, MA50, and MA200 produce NaN for exactly the right number of warmup rows, then a valid value at the exact boundary row
 - MACD produces NaN until 26 bars of data are available
+- `macd_signal` at the first valid MACD row equals `macd` at that row — verifies the signal EWM starts fresh with no pre-warmup contamination
 - In a monotonically rising series, `ma_fast > ma_medium > ma_slow` holds at the last row
 - Indicators for one commodity do not bleed into another — groupby isolation is verified by putting a rising and a flat series in the same dataframe and checking that the flat commodity's MAs stay exactly at its price
 - The pipeline produces no duplicate `(date, commodity)` pairs against the real CSV
@@ -137,7 +144,7 @@ Commodity names in the URL are normalised to lowercase — `/prices/Copper` and 
 │   ├── q1_data_manipulation.ipynb    CSV loading, filtering, monthly averages, charts
 │   ├── q2_sqlite_crud.ipynb          Schema design and CRUD operations
 │   ├── q3_pipeline.ipynb             Pipeline walkthrough and logging decorator
-│   ├── q6_backtest.ipynb             Strategy design, metrics, and commentary
+│   ├── q6_backtest.ipynb             Strategy design, metrics, return distribution, transaction cost sensitivity
 │   └── q7_async.ipynb                Async insert and concurrent reads
 ├── scripts/
 │   ├── init_db.py              Create database tables
@@ -188,7 +195,7 @@ The `/backtest/{commodity}` endpoint runs the full calculation at request time r
 
 - **Short dataset.** Two years (2020–2021) is not enough for robust strategy evaluation. A proper backtest would span multiple market regimes and ideally more of data.
 - **MA200 warmup.** The 200-day MA requires 200 bars before it produces a value. Combined with MACD and RSI warmup, the strategy is only active for around 320 of 523 trading days, which limits statistical significance.
-- **No transaction costs.** The backtest assumes zero costs and no slippage. In a real commodity market, bid-ask spreads and execution costs would reduce returns materially.
+- **No transaction costs.** The backtest assumes zero costs and no slippage. The Q6 notebook includes a sensitivity analysis at 0.1%, 0.5%, and 1.0% round-trip cost to show the break-even point, but the primary results are reported without costs.
 - **SQLite concurrency.** The database we're using (SQLite) can only handle one person saving data at a time. If two people try to save at the same moment, one has to wait. For a real app with many users, we would switch to a more powerful database.
 
 ---
@@ -207,6 +214,7 @@ The `/backtest/{commodity}` endpoint runs the full calculation at request time r
 | `matplotlib` | Charts in the Jupyter notebooks |
 | `jupyter` / `ipykernel` | Notebook environment |
 | `pytest` | Unit and integration tests |
+| `pytest-cov` | Test coverage measurement and reporting |
 | `httpx2` | HTTP client required by FastAPI's `TestClient` for API integration tests |
 | `ruff` | Linter and formatter, run automatically on every commit via pre-commit |
 | `pre-commit` | Git hook runner |

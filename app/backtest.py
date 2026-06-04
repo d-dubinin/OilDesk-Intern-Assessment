@@ -84,7 +84,7 @@ def run_backtest(df: pd.DataFrame) -> pd.DataFrame:
     - Daily settlement prices — no intraday execution
     - Position is taken at the close of the signal day
     - No transaction costs or slippage
-    - Position is +1 (long), -1 (short), or 0 (flat)
+    - Position is +1 (long), or 0 (flat)
     - Returns are log returns for mathematical consistency
     """
     df = compute_composite_signal(df)

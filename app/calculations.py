@@ -45,6 +45,7 @@ def compute_macd(
     - Histogram = MACD minus signal
 
     12/26/9 are the universal defaults across all trading platforms.
+    Rows are masked until at least `slow` bars of data are available.
     """
     grp = df.groupby("commodity")["price"]
 
@@ -56,6 +57,12 @@ def compute_macd(
         lambda x: x.ewm(span=signal, adjust=False).mean()
     )
     df["macd_hist"] = df["macd"] - df["macd_signal"]
+
+    # Mask until enough bars are available for the slow EMA
+    df.loc[
+        df.groupby("commodity").cumcount() < slow,
+        ["macd", "macd_signal", "macd_hist"]
+    ] = np.nan
 
     return df
 

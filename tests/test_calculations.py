@@ -52,6 +52,7 @@ def test_early_rows_nan():
     assert df["ma_slow"].iloc[:199].isna().all()
     assert df["rsi"].iloc[:14].isna().all()
 
+
 def test_moving_average_ordering():
     """
     In a steadily rising price series, fast MA reacts quicker than slow MA.
@@ -103,11 +104,13 @@ def test_indicators_independent_per_commodity():
     copper's rising prices and the MAs would be wrong.
     """
     dates = pd.date_range("2020-01-01", periods=250, freq="B")
-    df = pd.DataFrame({
-        "date": list(dates) * 2,
-        "commodity": ["copper"] * 250 + ["zinc"] * 250,
-        "price": list(range(1, 251)) + [100.0] * 250,
-    })
+    df = pd.DataFrame(
+        {
+            "date": list(dates) * 2,
+            "commodity": ["copper"] * 250 + ["zinc"] * 250,
+            "price": list(range(1, 251)) + [100.0] * 250,
+        }
+    )
     result = compute_all_indicators(df)
     zinc = result[result["commodity"] == "zinc"]
 
@@ -120,9 +123,17 @@ def test_no_duplicate_date_commodity_pairs():
     The pipeline must produce unique (date, commodity) combinations.
 
     The database has a UNIQUE(date, commodity) constraint so duplicates would
-    be silently dropped on insert. This test catches the problem earlier —
-    at the transformation stage — before it reaches the database.
+    be silently dropped on insert. This test catches the problem earlier
+    at the transformation stage before it reaches the database.
     """
     df = filter_data(load_csv(), COMMODITIES, YEARS)
     dupes = df.duplicated(subset=["date", "commodity"])
     assert not dupes.any(), f"{dupes.sum()} duplicate (date, commodity) pairs found"
+
+
+def test_rsi_flat_prices():
+    """RSI on a flat price series has no gains or losses — result should be NaN."""
+    dates = pd.date_range("2020-01-01", periods=50, freq="B")
+    df = pd.DataFrame({"date": dates, "commodity": "copper", "price": 100.0})
+    result = compute_all_indicators(df)
+    assert result["rsi"].dropna().empty

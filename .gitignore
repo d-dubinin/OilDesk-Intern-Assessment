@@ -11,9 +11,6 @@ __pycache__/
 .venv/
 *.egg-info/
 
-# UV
-.python-version
-
 # OS
 .DS_Store
 Thumbs.db

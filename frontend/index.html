@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Oil Desk — Commodity Analytics</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap"
+        rel="stylesheet" />
+</head>
+
+<body>
+
+    <header class="header">
+        <div class="header-left">
+            <span class="header-logo">OIL DESK</span>
+            <span class="header-sub">COMMODITY ANALYTICS</span>
+        </div>
+        <div class="header-right">
+            <span id="clock" class="header-clock"></span>
+            <span class="header-status" id="api-status">● CONNECTING</span>
+        </div>
+    </header>
+
+    <div class="toolbar">
+        <div class="commodity-tabs" id="commodity-tabs"></div>
+    </div>
+
+    <main class="main">
+
+        <section class="summary-strip" id="summary-strip">
+            <div class="stat-card">
+                <div class="stat-label">LATEST PRICE</div>
+                <div class="stat-value" id="stat-latest">—</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">DAY CHG %</div>
+                <div class="stat-value" id="stat-daily">—</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">WEEK CHG %</div>
+                <div class="stat-value" id="stat-weekly">—</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">PERIOD RETURN</div>
+                <div class="stat-value" id="stat-period">—</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">RSI (14)</div>
+                <div class="stat-value" id="stat-rsi">—</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">MACD</div>
+                <div class="stat-value" id="stat-macd">—</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">PERIOD LOW</div>
+                <div class="stat-value" id="stat-low">—</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">PERIOD HIGH</div>
+                <div class="stat-value" id="stat-high">—</div>
+            </div>
+        </section>
+
+        <section class="charts-row">
+            <div class="chart-panel panel--large">
+                <div class="panel-header">
+                    <span class="panel-title">PRICE & MOVING AVERAGES</span>
+                    <div style="display:flex;gap:12px;align-items:center">
+                        <span class="panel-sub" id="price-range"></span>
+                        <button onclick="resetZoom('price')" class="btn-reset">RESET ZOOM</button>
+                    </div>
+                </div>
+                <div class="chart-wrap">
+                    <canvas id="chart-price"></canvas>
+                </div>
+            </div>
+            <div class="chart-panel panel--small">
+                <div class="panel-header">
+                    <span class="panel-title">RSI (14)</span>
+                    <button onclick="resetZoom('rsi')" class="btn-reset">RESET ZOOM</button>
+                </div>
+                <div class="chart-wrap">
+                    <canvas id="chart-rsi"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <section class="charts-row">
+            <div class="chart-panel panel--full">
+                <div class="panel-header">
+                    <span class="panel-title">MACD</span>
+                    <div style="display:flex;gap:12px;align-items:center">
+                        <span class="panel-sub">12 / 26 / 9</span>
+                        <button onclick="resetZoom('macd')" class="btn-reset">RESET ZOOM</button>
+                    </div>
+                </div>
+                <div class="chart-wrap chart-wrap--short">
+                    <canvas id="chart-macd"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <section class="explanation-panel">
+            <div class="panel-header">
+                <span class="panel-title">ANALYSIS</span>
+            </div>
+            <div class="explanation-body" id="explanation-body">
+                Select a commodity to load analysis.
+            </div>
+        </section>
+
+        <section class="table-panel">
+            <div class="panel-header">
+                <span class="panel-title">PRICE & INDICATOR DATA</span>
+                <span class="panel-sub" id="table-count"></span>
+            </div>
+            <div class="table-wrap">
+                <table id="data-table">
+                    <thead>
+                        <tr>
+                            <th>DATE</th>
+                            <th>PRICE</th>
+                            <th>MA20</th>
+                            <th>MA50</th>
+                            <th>MA200</th>
+                            <th>MACD</th>
+                            <th>SIGNAL</th>
+                            <th>HIST</th>
+                            <th>RSI</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body"></tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>

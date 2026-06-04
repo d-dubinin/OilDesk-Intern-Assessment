@@ -28,19 +28,19 @@ def create_tables(conn: sqlite3.Connection) -> None:
 
     conn.execute("""
         CREATE TABLE IF NOT EXISTS indicators (
-            id          INTEGER PRIMARY KEY AUTOINCREMENT,
-            date        TEXT NOT NULL,
-            commodity   TEXT NOT NULL,
-            price       REAL,
-            ma_fast     REAL,
-            ma_medium   REAL,
-            ma_slow     REAL,
-            macd        REAL,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            date TEXT NOT NULL,
+            commodity TEXT NOT NULL,
+            price REAL,
+            ma_fast REAL,
+            ma_medium REAL,
+            ma_slow REAL,
+            macd REAL,
             macd_signal REAL,
-            macd_hist   REAL,
-            rsi         REAL,
-            source      TEXT NOT NULL DEFAULT 'Bloomberg',
-            created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+            macd_hist REAL,
+            rsi REAL,
+            source TEXT NOT NULL DEFAULT 'Bloomberg',
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
             UNIQUE(date, commodity)
         )
     """)
@@ -86,21 +86,65 @@ def get_indicators(conn: sqlite3.Connection, commodity: str) -> list:
 
 
 def get_summary(conn: sqlite3.Connection, commodity: str) -> dict:
-    """Return a summary of price statistics for a specific commodity."""
+    """Return price statistics summary for a specific commodity."""
     row = conn.execute(
         """
         SELECT
             commodity,
-            COUNT(*)              AS total_rows,
-            ROUND(MIN(price), 2)  AS min_price,
-            ROUND(MAX(price), 2)  AS max_price,
-            ROUND(AVG(price), 2)  AS avg_price,
-            MIN(date)             AS start_date,
-            MAX(date)             AS end_date
-        FROM indicators
+            COUNT(*) AS total_rows,
+            ROUND(MIN(price), 2) AS min_price,
+            ROUND(MAX(price), 2) AS max_price,
+            ROUND(AVG(price), 2) AS avg_price,
+            MIN(date) AS start_date,
+            MAX(date) AS end_date,
+            ROUND((SELECT price FROM indicators
+                   WHERE commodity = i.commodity
+                   ORDER BY date DESC LIMIT 1), 2) AS latest_price,
+            ROUND((SELECT price FROM indicators
+                   WHERE commodity = i.commodity
+                   ORDER BY date ASC LIMIT 1), 2) AS first_price,
+            ROUND((SELECT rsi FROM indicators
+                   WHERE commodity = i.commodity
+                   AND rsi IS NOT NULL
+                   ORDER BY date DESC LIMIT 1), 2) AS latest_rsi,
+            ROUND((SELECT macd FROM indicators
+                   WHERE commodity = i.commodity
+                   AND macd IS NOT NULL
+                   ORDER BY date DESC LIMIT 1), 2) AS latest_macd,
+            ROUND((SELECT price FROM indicators
+                   WHERE commodity = i.commodity
+                   ORDER BY date DESC LIMIT 1 OFFSET 1), 2) AS prev_day_price,
+            ROUND((SELECT price FROM indicators
+                   WHERE commodity = i.commodity
+                   ORDER BY date DESC LIMIT 1 OFFSET 4), 2) AS prev_week_price
+        FROM indicators i
         WHERE commodity = ?
         GROUP BY commodity
         """,
         (commodity,)
     ).fetchone()
-    return dict(row) if row else {}
+
+    if not row:
+        return {}
+
+    result = dict(row)
+
+    # Period return
+    if result["first_price"] and result["latest_price"]:
+        result["period_change_pct"] = round(
+            ((result["latest_price"] - result["first_price"]) / result["first_price"]) * 100, 2
+        )
+
+    # Daily change
+    if result["prev_day_price"] and result["latest_price"]:
+        result["daily_change_pct"] = round(
+            ((result["latest_price"] - result["prev_day_price"]) / result["prev_day_price"]) * 100, 2
+        )
+
+    # Weekly change
+    if result["prev_week_price"] and result["latest_price"]:
+        result["weekly_change_pct"] = round(
+            ((result["latest_price"] - result["prev_week_price"]) / result["prev_week_price"]) * 100, 2
+        )
+
+    return result

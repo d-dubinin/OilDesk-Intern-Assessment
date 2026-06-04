@@ -1,0 +1,7 @@
+[project]
+name = "oildesk-intern-assessment"
+version = "0.1.0"
+description = "Oil Desk commodity data pipeline and analytics dashboard"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []

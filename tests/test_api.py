@@ -1,5 +1,10 @@
+import sqlite3
+
 import pytest
+from fastapi.testclient import TestClient
+
 from app.config import COMMODITIES
+from app.main import app, get_db
 
 
 def test_health(client):
@@ -101,3 +106,44 @@ def test_404_error_message_lists_available_commodities(client):
     detail = res.json()["detail"]
     assert "gold" in detail
     assert "copper" in detail
+
+
+def test_health_returns_500_on_database_error():
+    """/health must return 500 with a database error message when the DB raises."""
+
+    def broken_db():
+        conn = sqlite3.connect(":memory:")
+        conn.row_factory = sqlite3.Row
+
+        def bad_execute(sql, *args, **kwargs):
+            raise sqlite3.OperationalError("simulated database failure")
+
+        conn.execute = bad_execute
+        try:
+            yield conn
+        finally:
+            conn.close()
+
+    app.dependency_overrides[get_db] = broken_db
+    try:
+        with TestClient(app, raise_server_exceptions=False) as c:
+            res = c.get("/health")
+        assert res.status_code == 500
+    finally:
+        app.dependency_overrides.clear()
+
+
+@pytest.mark.parametrize(
+    "endpoint",
+    [
+        "/prices/gold",
+        "/indicators/gold",
+        "/summary/gold",
+        "/backtest/gold",
+    ],
+)
+def test_unknown_commodity_returns_404(client, endpoint):
+    """Every commodity endpoint must return 404 for an unknown commodity."""
+    res = client.get(endpoint)
+    assert res.status_code == 404
+    assert "gold" in res.json()["detail"]

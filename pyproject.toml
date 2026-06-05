@@ -34,3 +34,7 @@ omit = ["app/async_pipeline.py"]
 
 [tool.coverage.report]
 show_missing = true
+exclude_lines = [
+    "if __name__ == .__main__.:",
+    "pragma: no cover",
+]

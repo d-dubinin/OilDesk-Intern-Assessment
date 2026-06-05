@@ -73,13 +73,13 @@ Notebooks are in `solutions/`. Q3 and Q7 require the pipeline to have been run f
 uv run pytest tests/ -v
 ```
 
-With coverage (92% on the core `app/` modules):
+With coverage (99% on the core `app/` modules):
 
 ```bash
 uv run pytest tests/ --cov
 ```
 
-28 tests across two files.
+37 tests across four files.
 
 **`test_calculations.py` — unit tests for indicator correctness**
 
@@ -98,12 +98,23 @@ uv run pytest tests/ --cov
 `conftest.py` builds a temporary SQLite database from the real CSV and overrides the FastAPI `get_db` dependency to point at it. Every API test runs against real pipeline data without depending on the `data/oildesk.db` file on disk.
 
 - `/health` returns 200 and `{"status": "ok"}`
+- `/health` returns 500 when the database raises an error
 - `/commodities` returns all three expected commodities
 - `/prices` returns rows; `/prices/{commodity}` is parametrized over all three commodities and verifies each returns only its own rows
 - `/indicators/{commodity}` is parametrized and checks all indicator columns are present
 - `/summary/{commodity}` is parametrized and checks all required statistics are present
 - `/backtest/{commodity}` is parametrized and checks both the metrics block and the daily series are returned with the expected fields
-- A request for an unknown commodity returns 404 with an error message that names the invalid commodity and lists what is available
+- Every commodity endpoint (`/prices`, `/indicators`, `/summary`, `/backtest`) returns 404 for an unknown commodity with an error message naming the invalid input
+
+**`test_database.py` — unit tests for database helpers**
+
+- `get_connection` creates the parent directory if it does not exist
+- `get_summary` returns an empty dict for a commodity not in the table
+
+**`test_pipeline.py` — integration tests for the data pipeline**
+
+- `insert_indicators` opens and closes its own connection when none is provided
+- `run_pipeline` completes end-to-end and populates the indicators table
 
 ---
 
@@ -152,6 +163,8 @@ Commodity names in the URL are normalised to lowercase — `/prices/Copper` and 
 ├── tests/
 │   ├── conftest.py             Test database fixture and TestClient setup
 │   ├── test_calculations.py    Unit tests for indicator correctness
+│   ├── test_database.py        Unit tests for database helpers
+│   ├── test_pipeline.py        Integration tests for the data pipeline
 │   └── test_api.py             Integration tests for all API endpoints
 ├── data/
 │   └── MarketData.csv

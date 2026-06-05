@@ -16,7 +16,7 @@ uv sync
 To activate the ruff pre-commit hook (linting and formatting on every commit):
 
 ```bash
-pre-commit install
+uv run pre-commit install
 ```
 
 ---
